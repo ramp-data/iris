@@ -14,7 +14,7 @@ import pandas as pd
 from shutil import copyfile
 from sklearn.model_selection import train_test_split
 
-ramp_kits_dir = '../ramp-kits'
+ramp_kits_dir = '../../ramp-kits'
 for arg in sys.argv[1:]:
     tokens = arg.split('=')
     if tokens[0] == 'ramp_kits_dir':

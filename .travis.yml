@@ -22,7 +22,7 @@ install:
 script:
     - flake8 *.py
     - coverage run prepare_data.py
-    - coverage run prepare_data.py ramp_kits_dir=../ramp-kits
+    - coverage run prepare_data.py ramp_kits_dir=../../ramp-kits
 after_success:
     - codecov
 notifications:
