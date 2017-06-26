@@ -4,12 +4,6 @@ Authors: Alexandre Gramfort & Balazs Kegl
 
 [![Build Status](https://travis-ci.org/ramp-data/iris.svg?branch=master)](https://travis-ci.org/ramp-data/iris)
 
-Set
-
-```
-export RAMP_KITS_DIR=<wherever your ramp kits are>
-```
-
 Execute
 
 ```
