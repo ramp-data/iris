@@ -1,53 +1,67 @@
-"""Script called when preparing a RAMP, either locally or on the backend.
-
-Typically, it creates data/public_train.csv and data/public_test.csv
-which will be committed into the repo and used by the starting kit,
-and data/train.csv and data/test.csv which are kept locally.
-
-It may also copy data/public_train.csv and data/public_test.csv
-into the starting kit data/train.csv and data/test.csv.
-"""
-
 import os
-import sys
+
+import click
 import pandas as pd
-from shutil import copyfile
+from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 
-ramp_kits_dir = '../../ramp-kits'
-for arg in sys.argv[1:]:
-    tokens = arg.split('=')
-    if tokens[0] == 'ramp_kits_dir':
-        ramp_kits_dir = tokens[1]
-    else:
-        print('Unknown argument {}'.format(tokens[0]))
-        exit(0)
-
-ramp_name = os.path.basename(os.getcwd())
-
-df = pd.read_csv(os.path.join('data', 'iris.csv'))
-df_train, df_test = train_test_split(df, test_size=0.2, random_state=57)
-df_train.to_csv(os.path.join('data', 'train.csv'), index=False)
-df_test.to_csv(os.path.join('data', 'test.csv'), index=False)
-
-# It is a good pracice to make the public data independent of both
-# the training and test data on the backend, but it is also fine
-# if the public data is the same as the training data (e.g., in case
-# we don't have much data to spare), since "cheaters"
-# can be caught by looking at their code and by them overfitting the
-# public leaderboard.
-df_public = df_train
-df_public_train, df_public_test = train_test_split(
-    df_public, test_size=0.2, random_state=57)
-df_public_train.to_csv(os.path.join('data', 'public_train.csv'), index=False)
-df_public_test.to_csv(os.path.join('data', 'public_test.csv'), index=False)
-
-# copy starting kit files to <ramp_kits_dir>/<ramp_name>/data
-copyfile(
-    os.path.join('data', 'public_train.csv'),
-    os.path.join(ramp_kits_dir, ramp_name, 'data', 'train.csv')
+PATH_DATA = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data"
 )
-copyfile(
-    os.path.join('data', 'public_test.csv'),
-    os.path.join(ramp_kits_dir, ramp_name, 'data', 'test.csv')
-)
+
+
+@click.command()
+def prepare_data():
+    data = fetch_openml(
+        "iris", version=1, as_frame=True, data_home=PATH_DATA
+    )
+    df = data.frame
+    df = df.rename(columns={
+        "sepallength": "sepal length",
+        "sepalwidth": "sepal width",
+        "petallength": "petal length",
+        "petalwidth": "petal width",
+        "class": "species",
+    })
+    df["species"] = df["species"].replace({
+        "Iris-setosa": "setosa",
+        "Iris-versicolor": "versicolor",
+        "Iris-virginica": "virginica"
+    })
+
+    # 1- split into private train and test sets.
+    random_state = 57
+    df_train, df_test = train_test_split(
+        df, test_size=0.2, random_state=random_state,
+    )
+    # 2- the private train set is also the public set which we need to split
+    # into a train and test set.
+    df_public_train, df_public_test = train_test_split(
+        df_train, test_size=0.2, random_state=random_state,
+    )
+    # 3- save all the data
+    if not os.path.exists(PATH_DATA):
+        os.makedirs(PATH_DATA)
+    df_train.to_csv(
+        os.path.join(PATH_DATA, "train.csv"),
+        index=False,
+    )
+    df_test.to_csv(
+        os.path.join(PATH_DATA, "test.csv"),
+        index=False,
+    )
+    public_dir = os.path.join(PATH_DATA, "public")
+    if not os.path.exists(public_dir):
+        os.makedirs(public_dir)
+    df_public_train.to_csv(
+        os.path.join(public_dir, "train.csv"),
+        index=False,
+    )
+    df_public_test.to_csv(
+        os.path.join(public_dir, "test.csv"),
+        index=False,
+    )
+
+
+if __name__ == "__main__":
+    prepare_data()
