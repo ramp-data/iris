@@ -1,7 +1,7 @@
 import os
 
 import click
-from sklearn.datasets import fetch_openml
+from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
 PATH_DATA = os.path.join(
@@ -11,21 +11,19 @@ PATH_DATA = os.path.join(
 
 @click.command()
 def prepare_data():
-    data = fetch_openml(
-        "iris", version=1, as_frame=True, data_home=PATH_DATA
-    )
+    data = load_iris(as_frame=True)
     df = data.frame
     df = df.rename(columns={
-        "sepallength": "sepal length",
-        "sepalwidth": "sepal width",
-        "petallength": "petal length",
-        "petalwidth": "petal width",
-        "class": "species",
+        "sepal length (cm)": "sepal length",
+        "sepal width (cm)": "sepal width",
+        "petal length (cm)": "petal length",
+        "petal width (cm)": "petal width",
+        "target": "species",
     })
     df["species"] = df["species"].replace({
-        "Iris-setosa": "setosa",
-        "Iris-versicolor": "versicolor",
-        "Iris-virginica": "virginica"
+        0: "setosa",
+        1: "versicolor",
+        2: "virginica"
     })
 
     # 1- split into private train and test sets.
